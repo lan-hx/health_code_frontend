@@ -1,0 +1,40 @@
+name: publish
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  job:
+    name: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 19.x
+      
+      - name: install deps
+        run: npm install
+      
+      - name: build
+        run: npm run build
+        
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: |
+            ${{github.workspace}}/build
+        
+      - name: deploy
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with: 
+          username: www
+          server: ${{ secrets.SERVER_ADDR }} 
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }} 
+          local_path: ./build/*
+          remote_path: ${{ secrets.REMOTE_PATH }} 
+          
