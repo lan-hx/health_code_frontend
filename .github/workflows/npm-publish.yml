@@ -32,11 +32,11 @@ jobs:
             ${{github.workspace}}/build
         
       - name: deploy
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        uses: wangyucode/sftp-upload-action@v2.0.2
         with: 
           username: www
-          server: ${{ secrets.SERVER_ADDR }} 
-          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }} 
-          local_path: ./build/*
-          remote_path: ${{ secrets.REMOTE_PATH }} 
+          host: ${{ secrets.SERVER_ADDR }} 
+          privateKey: ${{ secrets.SSH_PRIVATE_KEY }} 
+          localDir: ./build/*
+          remoteDir: ${{ secrets.REMOTE_PATH }} 
           
