@@ -37,6 +37,6 @@ jobs:
           username: www
           host: ${{ secrets.SERVER_ADDR }} 
           privateKey: ${{ secrets.SSH_PRIVATE_KEY }} 
-          localDir: ./build/*
+          localDir: ./build
           remoteDir: ${{ secrets.REMOTE_PATH }} 
           
