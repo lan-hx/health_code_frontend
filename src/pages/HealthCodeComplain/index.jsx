@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 import styles from "./index.module.css";
 import {Card, InfiniteScroll, List, Popup, Toast} from "antd-mobile";
@@ -6,6 +6,8 @@ import {Badge, Button, Divider, Input, Space} from "antd";
 import {sleep} from "antd-mobile/es/utils/sleep";
 import {PlusOutlined} from "@ant-design/icons";
 import {nanoid} from "nanoid";
+import {useSelector} from "react-redux";
+import axios from "axios";
 
 const { TextArea } = Input;
 
@@ -27,12 +29,66 @@ const stateMap = ['通过', '驳回', '待审核']
 const colorMap = ['#52c41a', '#ff411c', '#888888']
 
 function HealthCodeComplain(props) {
+  const userToken = useSelector(state => state.user.token)
+
   const [complains, setComplains] = useState(test_data)
   const [popup, setPopup] = useState(false)
   const [editingData, setEditingData] = useState({})
   const [editingNew, setEditingNew] = useState(false)
   const [popupLoading, setPopupLoading] = useState(false)
   const [newComplainContent, setNewComplainContent] = useState('')
+  const [hasMore, setHasMore] = useState(true)
+
+  const GetHealthCodeComplainList = async() =>{
+    try {
+      const response = await axios.post('/api/GetHealthCodeComplainList', {
+        // todo
+        token: userToken,
+        num: 10,
+        offset: complains.length
+      })
+      console.log(response);
+      const data = response.data
+      if(data.error !== 0) {
+        Toast.show({icon: 'fail', content: `获取失败，错误码${data.error}，错误信息：${data.message}`})
+        await new Promise(r => setTimeout(r, 3000));
+      } else if(data.content) {
+        setComplains([...complains, ...data.content])
+        Toast.show({icon: 'success', content: `获取成功`})
+      }
+      else {
+        setHasMore(false)
+      }
+    } catch (error) {
+      console.error(error);
+      Toast.show({icon: 'fail', content: `获取失败，网络错误`})
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  }
+
+  const HealthCodeComplain = async() =>{
+    const newComplain = {id: nanoid(), datetime: '服务器决定', content: newComplainContent, state: 2, comment: ''}
+    try {
+      const response = await axios.post('/api/HealthCodeComplain', {
+        token: userToken,
+        content: newComplainContent
+      })
+      console.log(response);
+      const data = response.data
+      if(data.error !== 0) {
+        Toast.show({icon: 'fail', content: `申诉失败，错误码${data.error}，错误信息：${data.message}`})
+        return false
+      } else if(data.id) {
+        setComplains([{...newComplain, id: data.id, datetime: data.datetime}, ...complains])
+        Toast.show({icon: 'success', content: `申诉成功`})
+        return true
+      }
+    } catch (error) {
+      console.error(error);
+      Toast.show({icon: 'fail', content: `申诉失败，网络错误`})
+      return false
+    }
+  }
 
   const buttonMore = (item) => {
     setEditingData(item)
@@ -46,6 +102,11 @@ function HealthCodeComplain(props) {
     let num = complains.length
     setComplains([...complains, {...complains[0], id: ++num}])
   }
+
+  useEffect(()=>{
+    GetHealthCodeComplainList()
+  }, [])
+
   return (
     <>
       <List header={
@@ -64,7 +125,7 @@ function HealthCodeComplain(props) {
           </List.Item>
         )}
       </List>
-      <InfiniteScroll loadMore={addTestData} hasMore={true}/>
+      <InfiniteScroll loadMore={GetHealthCodeComplainList} hasMore={hasMore} threshold={0}/>
       <Popup
         visible={popup}
         onMaskClick={() => {
@@ -83,12 +144,13 @@ function HealthCodeComplain(props) {
                         onClick={async () => {
                           if (editingData.id) {
                             setPopupLoading(true)
-                            await new Promise(r => setTimeout(r, 1000));
-                            setComplains([{id: nanoid(), datetime: '服务器决定', content: newComplainContent, state: 2, comment: ''}, ...complains])
+                            if(await HealthCodeComplain()) {
+                              setPopup(false)
+                            }
+                            // setComplains([{id: nanoid(), datetime: '服务器决定', content: newComplainContent, state: 2, comment: ''}, ...complains])
                             setPopupLoading(false)
-                            Toast.show({icon: 'success', content: '添加成功'})
+                            // Toast.show({icon: 'success', content: '添加成功'})
                           }
-                          setPopup(false)
                         }}>保存</Button>
               </div>
               <Divider/>
@@ -117,7 +179,6 @@ function HealthCodeComplain(props) {
               [debug]id: {editingData.id}<br/>
             </>
           }
-
         </div>
       </Popup>
     </>

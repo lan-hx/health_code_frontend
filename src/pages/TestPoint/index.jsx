@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import styles from "./index.module.css";
-import {Card, InfiniteScroll, List} from "antd-mobile";
+import {Card, InfiniteScroll, List, Toast} from "antd-mobile";
 import {Badge, Button} from "antd";
 import {sleep} from "antd-mobile/es/utils/sleep";
 import {nanoid} from "nanoid";
 import {PlusOutlined} from "@ant-design/icons";
+import axios from "axios";
+import {setUserToken} from "../../redux/user/userSlice";
+import {setUserInfo} from "../../redux/userInfo/userInfoSlice";
 
 TestPoint.propTypes = {
 
@@ -18,13 +21,45 @@ const test_data = [
 ]
 
 function TestPoint(props) {
-  const [points, setPoints] = useState(test_data)
+  const [points, setPoints] = useState([])
+  const [hasMore, setHasMore] = useState(true)
+
+  const GetTestStationList = async()=>{
+    try {
+      const response = await axios.post('/api/GetTestStationList', {
+        // todo
+        address: [10.22312, 123.12312],
+        num: 10,
+        offset: points.length
+      })
+      console.log(response);
+      const data = response.data
+      if(data.error !== 0) {
+        Toast.show({icon: 'fail', content: `获取失败，错误码${data.error}，错误信息：${data.message}`})
+        await new Promise(r => setTimeout(r, 3000));
+      } else if(data.content) {
+        setPoints([...points, ...data.content])
+        Toast.show({icon: 'success', content: `获取成功`})
+      }
+      else {
+        setHasMore(false)
+      }
+    } catch (error) {
+      console.error(error);
+      Toast.show({icon: 'fail', content: `获取失败，网络错误`})
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  }
 
   const addTestData = async () => {
     await sleep(1000)
     let num = points.length
     setPoints([...points, {...points[0], id: ++num}])
   }
+
+  useEffect(()=>{
+    GetTestStationList()
+  }, [])
 
   return (
    <>
@@ -35,7 +70,7 @@ function TestPoint(props) {
          </List.Item>
        )}
      </List>
-     <InfiniteScroll loadMore={addTestData} hasMore={true}/>
+     <InfiniteScroll loadMore={GetTestStationList} hasMore={hasMore} threshold={0}/>
    </>
   );
 }

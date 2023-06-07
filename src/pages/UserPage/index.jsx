@@ -9,6 +9,7 @@ import {useNavigate} from "react-router-dom";
 import {useDispatch, useSelector} from "react-redux";
 import {setUserToken} from "../../redux/user/userSlice";
 import {nanoid} from "nanoid";
+import axios from "axios";
 
 UserPage.propTypes = {};
 
@@ -17,7 +18,33 @@ function UserPage(props) {
   const userToken = useSelector(state => state.user.token)
   const disaptch = useDispatch()
 
+  const [notification, SetNotification] = useState(false)
+
+  const getNotifications = async () => {
+    try {
+      const response = await axios.post('/api/GetNotifications', {
+        token: userToken
+      })
+      console.log(response);
+      const data = response.data
+      if (data.error !== 0) {
+        Toast.show({icon: 'fail', content: `自动提醒获取失败，错误码${data.error}，错误信息：${data.message}`})
+      } else if (data.status) {
+        SetNotification(data.status)
+      }
+    } catch (error) {
+      console.error(error);
+      Toast.show({icon: 'fail', content: `自动提醒获取失败，网络错误`})
+    }
+  }
+
+  const setNotification = async () => {
+    // todo
+    Toast.show({icon: 'fail', content: `后端未实现`})
+  }
+
   useEffect(() => {
+    getNotifications()
     if (userToken.length === 0) {
       Toast.show('提示：未获取到用户token，可以跳转登录界面')
     }
@@ -70,7 +97,7 @@ function UserPage(props) {
         <List.Item clickable>
           扫描场所码
         </List.Item>
-        <List.Item extra={<Switch defaultChecked/>}
+        <List.Item extra={<Switch checked={notification} onChange={(checked) => setNotification(checked)}/>}
                    description='开启后，将在您的核酸检测结果过期前一天发送邮件提醒'>开启核酸检测提醒</List.Item>
         <List.Item clickable onClick={() => {
           navigate('/user/about')
@@ -96,6 +123,8 @@ function UserPage(props) {
 
 function ProfileCard(props) {
   const navigate = useNavigate()
+  const userInfo = useSelector(state => state.userInfo)
+
   return (
     <Card style={{borderRadius: 16, backgroundColor: "#e5e5e5"}}
           bodyStyle={{display: "flex", alignItems: "center", flexDirection: "row"}}>
@@ -107,8 +136,8 @@ function ProfileCard(props) {
         flexDirection: "column",
         justifyContent: "space-around"
       }}>
-        <div>姓名：XXX</div>
-        <div>年龄：120</div>
+        <div>姓名：{userInfo?.name}</div>
+        <div>年龄：{userInfo?.name}</div>
       </div>
       <Button type='text' onClick={() => {
         navigate('/user/information')

@@ -1,35 +1,75 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import styles from "./index.module.css";
-import {List, Card, InfiniteScroll} from "antd-mobile";
+import {List, Card, InfiniteScroll, Toast} from "antd-mobile";
 import {Badge} from "antd";
-import { sleep } from 'antd-mobile/es/utils/sleep';
+import {sleep} from 'antd-mobile/es/utils/sleep';
+import {useSelector} from "react-redux";
+import axios from "axios";
 
 TestShow.propTypes = {};
 
+const textMap = ["阴性", "混管阳性", "阳性", "报告未出"]
+const colorMap = ["#52c41a", "#ff411c", "#ff411c", "#888888"]
+
 const test_data = [
-  {id:1, result:"阴性", color:"#52c41a", time:"2023-11-11 11:11:11"},
-  {id:2, result:"阳性", color:"#ff411c", time:"2023-11-11 11:11:12"},
-  {id:3, result:"报告未出", color:"#888888", time:"2023-11-11 11:11:13"}
+  {id: 1, result: "阴性", color: "#52c41a", time: "2023-11-11 11:11:11"},
+  {id: 2, result: "阳性", color: "#ff411c", time: "2023-11-11 11:11:12"},
+  {id: 3, result: "报告未出", color: "#888888", time: "2023-11-11 11:11:13"}
 ]
 
 
-
 function TestShow(props) {
-  const [testResults, setTestResults] = useState(test_data)
-  const addTestData = async ()=>{
+  const userToken = useSelector(state => state.user.token)
+
+  const [testResults, setTestResults] = useState([])
+  const [hasMore, setHasMore] = useState(true)
+
+  const GetTests = async () => {
+    try {
+      const response = await axios.post('/api/GetTests', {
+        token: userToken,
+        num: 10,
+        offset: testResults.length
+      })
+      console.log(response);
+      const data = response.data
+      if (data.error !== 0) {
+        Toast.show({icon: 'fail', content: `获取失败，错误码${data.error}，错误信息：${data.message}`})
+        await new Promise(r => setTimeout(r, 3000));
+      } else if (data.content) {
+        setTestResults([...testResults, ...data.content])
+        Toast.show({icon: 'success', content: `获取成功`})
+      } else {
+        setHasMore(true)
+      }
+    } catch (error) {
+      console.error(error);
+      Toast.show({icon: 'fail', content: `获取失败，网络错误`})
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  }
+
+  const addTestData = async () => {
     await sleep(1000)
     let num = testResults.length
     setTestResults([...testResults, ...testResults.map(
-      (item)=>{return {...item, id:++num}})
+      (item) => {
+        return {...item, id: ++num}
+      })
     ])
   }
+
+  useEffect(() => {
+    GetTests()
+  }, [])
+
   return (
     <>
       <List header='以下是xxx的核酸检测结果'>
-        {testResults.map((item)=> <List.Item key={item.id}><TestShowCard {...item}/></List.Item>)}
+        {testResults.map((item) => <List.Item key={item.test_id}><TestShowCard {...item}/></List.Item>)}
       </List>
-      <InfiniteScroll loadMore={addTestData} hasMore={true} />
+      <InfiniteScroll loadMore={GetTests} hasMore={hasMore} threshold={0}/>
     </>
   );
 }
@@ -40,11 +80,11 @@ function TestShowCard(props) {
       <div style={{fontWeight: "bold", fontSize: 20}}>
         检测结果：
       </div>
-    } extra={<Badge count={props.result} style={{backgroundColor: props.color}}/>}
+    } extra={<Badge count={textMap[props.result]} style={{backgroundColor: colorMap[props.result]}}/>}
           style={{borderRadius: 16, backgroundColor: "#e5e5e5"}}>
       <div style={{display: "flex", justifyContent: "space-between"}}>
         <span style={{fontWeight: "bold"}}>报告时间：</span>
-        <span style={{textAlign: "right"}}>{props.time}</span>
+        <span style={{textAlign: "right"}}>{props.date_time}</span>
       </div>
     </Card>
   )

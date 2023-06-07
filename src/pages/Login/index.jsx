@@ -7,11 +7,12 @@ import {nanoid} from "nanoid";
 import {useDispatch} from "react-redux";
 import {setUserToken} from "../../redux/user/userSlice";
 import axios from "axios";
+import {setUserInfo} from "../../redux/userInfo/userInfoSlice";
 
 Login.propTypes = {};
 
 function Login(props) {
-  const disaptch = useDispatch()
+  const dispatch = useDispatch()
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const [form] = Form.useForm()
@@ -42,7 +43,8 @@ function Login(props) {
               Toast.show({icon: 'fail', content: `登录失败，错误码${data.error}，错误信息：${data.message}`})
             } else if(data.token) {
               Toast.show({icon: 'success', content: `登录成功`})
-              disaptch(setUserToken(data.token))
+              dispatch(setUserToken(data.token))
+              dispatch(setUserInfo({uid: data.uid, name: data.name, card_id: data.card_id}))
               navigate('/user')
             }
           } catch (error) {
@@ -50,12 +52,6 @@ function Login(props) {
             Toast.show({icon: 'fail', content: `登录失败，网络错误`})
           }
           setLoading(false)
-          // await new Promise(r => setTimeout(r, 1000))
-          // setLoading(false)
-          // const token = nanoid()
-          // Toast.show(`假设登录成功！返回token为${token}`)
-          // disaptch(setUserToken(token))
-          // navigate('/user')
         }}>
         登录
       </Button>

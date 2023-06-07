@@ -16,19 +16,54 @@ import styles from "./index.module.css";
 import {useNavigate} from "react-router-dom";
 import {nanoid} from "nanoid";
 import {useSelector} from "react-redux";
+import axios from "axios";
+import {setUserToken} from "../../redux/user/userSlice";
+import {setUserInfo} from "../../redux/userInfo/userInfoSlice";
 
 Home.propTypes = {};
 
+const colorMap = ['#52c41a', '#ff411c', 'orange', '#888888']
+const testColorMap = ['#52c41a', '#ff411c', '#ff411c', '#888888']
+
 function Home(props) {
   const userToken = useSelector(state => state.user.token)
+  const userInfo = useSelector(state => state.userInfo)
   const navigate = useNavigate()
 
-  const [qrCode, setQrCode] = React.useState('绿码哈哈哈哈哈哈哈哈哈哈哈哈哈' + nanoid());
+  const [qrCodeState, setQrCodeState] = useState(3)
+  const [qrCode, setQrCode] = useState('该二维码无效，请刷新重试');
+  const [latestTest, setLatestTest] = useState({datetime: '', result: ''})
   const [name, setName] = useState('XXX')
   const [nameHidden, setNameHidden] = useState(true)
   const [time, setTime] = useState(new Date().toLocaleString())
 
+  const getHealthCodeStatus = async () => {
+    try {
+      const response = await axios.post('/api/GetHealthCodeStatus', {
+        token: userToken
+      })
+      console.log(response);
+      const data = response.data
+      if (data.error !== 0) {
+        setQrCodeState(3)
+        setQrCode('该二维码无效，请刷新重试')
+        Toast.show({icon: 'fail', content: `更新失败，错误码${data.error}，错误信息：${data.message}`})
+      } else if (data.status) {
+        setQrCodeState(data.status)
+        setQrCode(data.health_code_string)
+        setLatestTest(data.latest_test)
+        Toast.show({icon: 'success', content: `更新成功`})
+      }
+    } catch (error) {
+      console.error(error);
+      setQrCodeState(3)
+      setQrCode('该二维码无效，请刷新重试')
+      Toast.show({icon: 'fail', content: `更新失败，网络错误`})
+    }
+  }
+
   useEffect(() => {
+    getHealthCodeStatus()
     const interval = setInterval(() => {
       setTime(new Date().toLocaleString());
     }, 1000);
@@ -43,7 +78,7 @@ function Home(props) {
         <div className={styles.qrCodeWrapper}>
           <Row gutter={16} justify="space-around" style={{width: "100%"}}>
             <Col span={12}>
-              {name}&nbsp;
+              {nameHidden ? (userInfo?.name) : (userInfo?.name.split('').map((item, index) => index === 1 ? '*' : item))}&nbsp;
               {nameHidden ? <EyeTwoTone onClick={() => {
                 setNameHidden(!nameHidden)
               }}/> : <EyeInvisibleTwoTone onClick={() => {
@@ -60,11 +95,13 @@ function Home(props) {
             </Col>
             <Col span={24}>
               <div style={{display: 'flex', justifyContent: 'center', padding: 0}}>
-                <div onClick={() => {
-                  setQrCode('绿码哈哈哈哈哈哈哈哈哈哈哈哈哈' + nanoid())
-                  Toast.show({icon: 'success', content: '更新成功！'})
+                <div onClick={async () => {
+                  await getHealthCodeStatus()
+                  // setQrCode('绿码哈哈哈哈哈哈哈哈哈哈哈哈哈' + nanoid())
+                  // Toast.show({icon: 'success', content: '更新成功！'})
                 }}>
-                  <QRCode value={qrCode || '-'} style={{backgroundColor: "#e5e5e5"}} bordered={false} color="green"/>
+                  <QRCode value={qrCode || '-'} style={{backgroundColor: "#e5e5e5"}} bordered={false}
+                          color={colorMap[qrCodeState]}/>
                 </div>
               </div>
             </Col>
@@ -79,7 +116,9 @@ function Home(props) {
             }}/>
           </Col>
           <Col span={8}>
-            <HomeCardButton content='通信行程卡' icon={UpCircleTwoTone} onClick={()=>{window.location.href='https://xc.caict.ac.cn/';}}/>
+            <HomeCardButton content='通信行程卡' icon={UpCircleTwoTone} onClick={() => {
+              window.location.href = 'https://xc.caict.ac.cn/';
+            }}/>
           </Col>
           <Col span={8}>
             <HomeCardButton content='健康码变码申请' icon={MailTwoTone} onClick={() => {
@@ -95,12 +134,14 @@ function Home(props) {
             <HomeCardButton content='场所码' icon={BankTwoTone}/>
           </Col>
           <Col span={8}>
-            <HomeCardButton content='查看核酸检测点信息' icon={HomeTwoTone}  onClick={()=>{navigate('/testpoint')}}/>
+            <HomeCardButton content='查看核酸检测点信息' icon={HomeTwoTone} onClick={() => {
+              navigate('/testpoint')
+            }}/>
           </Col>
         </Row>
       </Card>
 
-      <div style={{textAlign:"center"}}>
+      <div style={{textAlign: "center"}}>
         一些说明<br/>
         [debug] token = {userToken}, qr = {qrCode}
       </div>

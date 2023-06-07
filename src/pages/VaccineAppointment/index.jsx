@@ -6,6 +6,8 @@ import {Badge, Button, Divider, Input} from "antd";
 import {sleep} from "antd-mobile/es/utils/sleep";
 import {nanoid} from "nanoid";
 import {PlusOutlined} from "@ant-design/icons";
+import {useSelector} from "react-redux";
+import axios from "axios";
 
 const {TextArea} = Input;
 
@@ -177,8 +179,13 @@ const test_data = [
   },
 ]
 
+const textMap = ['预约成功', '预约失败']
+const colorMap = ["#52c41a", "#ff411c"]
+
 function VaccineAppointment(props) {
-  const [vapps, setVapps] = useState(test_data)
+  const userToken = useSelector(state => state.user.token)
+
+  const [vapps, setVapps] = useState([])
   const [popup, setPopup] = useState(false)
   const [editingData, setEditingData] = useState({})
   const [editingNew, setEditingNew] = useState(false)
@@ -192,6 +199,84 @@ function VaccineAppointment(props) {
   const [kindPickerValue, setKindPickerValue] = useState([])
   const [addressPickerVisible, setAddressPickerVisible] = useState(false)
   const [addressPickerValue, setAddressPickerValue] = useState([])
+  const [hasMore, setHasMore] = useState(true)
+
+  const GetVaccinumAppointmentState = async() =>{
+    try {
+      const response = await axios.post('/api/GetVaccinumAppointmentState', {
+        // todo
+        token: userToken,
+        num: 10,
+        offset: vapps.length
+      })
+      console.log(response);
+      const data = response.data
+      if(data.error !== 0) {
+        Toast.show({icon: 'fail', content: `获取失败，错误码${data.error}，错误信息：${data.message}`})
+        await new Promise(r => setTimeout(r, 3000));
+      } else if(data.content) {
+        setVapps([...vapps, ...data.content])
+        Toast.show({icon: 'success', content: `获取成功`})
+      }
+      else {
+        setHasMore(false)
+      }
+    } catch (error) {
+      console.error(error);
+      Toast.show({icon: 'fail', content: `获取失败，网络错误`})
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  }
+
+  const GetVaccinumAppointmentAddress = async()=>{
+    try {
+      const response = await axios.post('/api/GetVaccinumAppointmentAddress', {
+        // todo
+        address: [10.22312, 123.12312],
+        num: 10,
+      })
+      console.log(response);
+      const data = response.data
+    //   if(data.error !== 0) {
+    //     Toast.show({icon: 'fail', content: `获取失败，错误码${data.error}，错误信息：${data.message}`})
+    //     await new Promise(r => setTimeout(r, 3000));
+    //   } else if(data.content) {
+    //     setPoints([...points, ...data.content])
+    //     Toast.show({icon: 'success', content: `获取成功`})
+    //   }
+    //   else {
+    //     setHasMore(false)
+    //   }
+    } catch (error) {
+      console.error(error);
+      // Toast.show({icon: 'fail', content: `获取失败，网络错误`})
+      // await new Promise(r => setTimeout(r, 3000));
+    }
+  }
+
+  // const HealthCodeComplain = async() =>{
+  //   const newComplain = {id: nanoid(), datetime: '服务器决定', content: newComplainContent, state: 2, comment: ''}
+  //   try {
+  //     const response = await axios.post('/api/HealthCodeComplain', {
+  //       token: userToken,
+  //       content: newComplainContent
+  //     })
+  //     console.log(response);
+  //     const data = response.data
+  //     if(data.error !== 0) {
+  //       Toast.show({icon: 'fail', content: `申诉失败，错误码${data.error}，错误信息：${data.message}`})
+  //       return false
+  //     } else if(data.id) {
+  //       setComplains([{...newComplain, id: data.id, datetime: data.datetime}, ...complains])
+  //       Toast.show({icon: 'success', content: `申诉成功`})
+  //       return true
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //     Toast.show({icon: 'fail', content: `申诉失败，网络错误`})
+  //     return false
+  //   }
+  // }
 
   const buttonMore = (item) => {
     setEditingData(item)
@@ -219,12 +304,12 @@ function VaccineAppointment(props) {
         </div>
       } style={{width: '100%'}}>
         {vapps.map((item) =>
-          <List.Item key={item.id}>
+          <List.Item key={item.vaccinum_appointment_id}>
             <VaccineAppointmentCard buttonMore={buttonMore} data={item}/>
           </List.Item>
         )}
       </List>
-      <InfiniteScroll loadMore={addTestData} hasMore={true}/>
+      <InfiniteScroll loadMore={addTestData} hasMore={true} threshold={0}/>
       <Popup
         visible={popup}
         onMaskClick={() => {
@@ -350,7 +435,7 @@ function VaccineAppointmentCard(props) {
       <div style={{fontWeight: "bold", fontSize: 20}}>
         预约结果：
       </div>
-    } extra={<Badge count={'预约成功'} style={{backgroundColor: '#52c41a'}}/>}
+    } extra={<Badge count={textMap[data.status]} style={{backgroundColor: colorMap[data.status]}}/>}
           style={{borderRadius: 16, backgroundColor: "#e5e5e5"}}>
       <div style={{display: "flex", justifyContent: "space-between"}}>
         <span style={{fontWeight: "bold"}}>预约接种时间：</span>
@@ -358,7 +443,7 @@ function VaccineAppointmentCard(props) {
       </div>
       <div style={{display: "flex", justifyContent: "space-between"}}>
         <span style={{fontWeight: "bold"}}>接种地点：</span>
-        <span style={{textAlign: "right"}}>{data.address}</span>
+        <span style={{textAlign: "right"}}>{data.address_name}</span>
       </div>
       <div style={{display: "flex", justifyContent: "space-between"}}>
         <span style={{fontWeight: "bold"}}>疫苗种类：</span>
