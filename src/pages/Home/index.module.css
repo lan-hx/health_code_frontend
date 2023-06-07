@@ -1,0 +1,17 @@
+.cardCodeBody {
+    background-color: #e5e5e5;
+    /*border: solid 1px #000000;*/
+    border-radius: 10px;
+}
+
+.cardButtons {
+    background-color: #e5e5e5;
+    /*border: solid 1px #000000;*/
+    border-radius: 10px;
+}
+
+.qrCodeWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

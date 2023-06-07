@@ -1,0 +1,43 @@
+.app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.top {
+    flex: 0;
+    border-bottom: solid 1px var(--adm-color-border);
+    height: 45px;
+    /*position: sticky;*/
+    z-index: 1;
+    background-color: white;
+    /*left: 0;*/
+    /*top: 0;*/
+    /*width: 100%;*/
+}
+
+.body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    width: 100%;
+}
+
+.bottom {
+    flex: 0;
+    border-top: solid 1px var(--adm-color-border);
+    position: fixed;
+    z-index: 5;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 50px;
+    background-color: white;
+}
+
+.fakeBottom {
+    padding-bottom: 50px;
+}
