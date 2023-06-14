@@ -7,8 +7,13 @@ import {routes, tabs} from "./config";
 import styles from "./index.module.css";
 import {Affix} from "antd";
 import {nanoid} from "nanoid";
+import {useCookies} from "react-cookie";
+import {setUserToken} from "../../redux/user/userSlice";
+import {useDispatch} from "react-redux";
 
 function HealthCodeMain() {
+  const [cookies, setCookie, removeCookie] = useCookies(['user']);
+  const dispatch = useDispatch()
   const [height, setHeight] = useState(undefined)
   const updateHeight = () => {
     // 移动端高度自适应
@@ -24,6 +29,8 @@ function HealthCodeMain() {
     return () => window.removeEventListener('resize', updateHeight);
   }, []);
   console.log(styles.app)
+  dispatch(setUserToken(cookies.token ?? ''))
+  console.log(`get token from cookie: ${cookies.token}`)
   return (<Router initialEntries={['/home']}>
     <div className={styles.app} style={height ? {height: height} : {}}>
       <HealthCodeContent className={styles.content}/>

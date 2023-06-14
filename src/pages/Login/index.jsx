@@ -8,6 +8,7 @@ import {useDispatch} from "react-redux";
 import {setUserToken} from "../../redux/user/userSlice";
 import axios from "axios";
 import {setUserInfo} from "../../redux/userInfo/userInfoSlice";
+import {useCookies} from "react-cookie";
 
 Login.propTypes = {};
 
@@ -15,6 +16,7 @@ function Login(props) {
   const dispatch = useDispatch()
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const [cookies, setCookie, removeCookie] = useCookies(['user']);
   const [form] = Form.useForm()
   return (
     <div style={{margin: "20px 16px 0"}}>
@@ -45,6 +47,7 @@ function Login(props) {
               Toast.show({icon: 'success', content: `登录成功`})
               dispatch(setUserToken(data.token))
               dispatch(setUserInfo({uid: data.uid, name: data.name, card_id: data.card_id}))
+              setCookie('token', data.token)
               navigate('/user')
             }
           } catch (error) {
