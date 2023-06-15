@@ -48,7 +48,7 @@ function Home(props) {
         setQrCodeState(3)
         setQrCode('该二维码无效，请刷新重试')
         Toast.show({icon: 'fail', content: `更新失败，错误码${data.error}，错误信息：${data.message}`})
-      } else if (data.status) {
+      } else if(data.status != null) {
         setQrCodeState(data.status)
         setQrCode(data.health_code_string)
         setLatestTest(data.latest_test)

@@ -48,7 +48,7 @@ function UserPage(props) {
     if (userToken.length === 0) {
       Toast.show('提示：未获取到用户token，可以跳转登录界面')
     }
-  })
+  }, [])
 
   return (
     <div style={{margin: "20px 16px 0"}}>
