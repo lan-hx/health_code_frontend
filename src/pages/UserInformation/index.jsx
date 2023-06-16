@@ -73,13 +73,13 @@ function UserInformation(props) {
           <Button type="primary" size="small" loading={true}>保存(已弃用)</Button>
         </div>
       }>
-        <List.Item prefix={<UserOutlined />} extra={userInfo?.name}>
+        <List.Item prefix={<UserOutlined />} extra={userInfo?.info?.name}>
           姓名
         </List.Item>
-        <List.Item extra={sex}>
+        <List.Item extra={sex === 0 ? '男' : '女'}>
           性别
         </List.Item>
-        <List.Item extra={userInfo?.card_id}>
+        <List.Item extra={userInfo?.info?.card_id}>
           身份证号
         </List.Item>
         <List.Item extra={phone} onClick={()=>{setPopupValue(phone);setPopupSetFunction(()=>setPhone);setPopup(true);}}>

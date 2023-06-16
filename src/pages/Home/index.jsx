@@ -13,7 +13,7 @@ import {
   HomeTwoTone
 } from "@ant-design/icons";
 import styles from "./index.module.css";
-import {useNavigate} from "react-router-dom";
+import {useLocation, useNavigate} from "react-router-dom";
 import {nanoid} from "nanoid";
 import {useSelector} from "react-redux";
 import axios from "axios";
@@ -29,35 +29,52 @@ function Home(props) {
   const userToken = useSelector(state => state.user.token)
   const userInfo = useSelector(state => state.userInfo)
   const navigate = useNavigate()
+  const {search} = useLocation()
+  const query = new URLSearchParams(search)
+  const location_code = query.get('location')
 
   const [qrCodeState, setQrCodeState] = useState(3)
   const [qrCode, setQrCode] = useState('该二维码无效，请刷新重试');
-  const [latestTest, setLatestTest] = useState({datetime: '', result: ''})
+  const [latestTest, setLatestTest] = useState({})
   const [name, setName] = useState('XXX')
   const [nameHidden, setNameHidden] = useState(true)
   const [time, setTime] = useState(new Date().toLocaleString())
+  const [locationName, setLocationName] = useState(null)
 
   const getHealthCodeStatus = async () => {
     try {
-      const response = await axios.post('/api/GetHealthCodeStatus', {
-        token: userToken
-      })
+      let response = undefined;
+      if (location_code == null) {
+        response = await axios.post('/api/GetHealthCodeStatus', {
+          token: userToken
+        })
+      } else {
+        response = await axios.post('/api/ScanLocationCode', {
+          token: userToken,
+          place_code_string: location_code
+        })
+      }
       console.log(response);
       const data = response.data
       if (data.error !== 0) {
         setQrCodeState(3)
         setQrCode('该二维码无效，请刷新重试')
+        setLatestTest({})
+        setLocationName(null)
         Toast.show({icon: 'fail', content: `更新失败，错误码${data.error}，错误信息：${data.message}`})
-      } else if(data.status != null) {
+      } else if (data.status != null) {
         setQrCodeState(data.status)
         setQrCode(data.health_code_string)
         setLatestTest(data.latest_test)
+        setLocationName(data.place_name ?? null)
         Toast.show({icon: 'success', content: `更新成功`})
       }
     } catch (error) {
       console.error(error);
       setQrCodeState(3)
       setQrCode('该二维码无效，请刷新重试')
+      setLatestTest({})
+      setLocationName(null)
       Toast.show({icon: 'fail', content: `更新失败，网络错误`})
     }
   }
@@ -70,6 +87,19 @@ function Home(props) {
     return () => clearInterval(interval);
   }, []);
 
+  const test_days = latestTest.datetime ? Math.floor((new Date().getTime() - latestTest.datetime) / 86400000) : null
+  let test_tip = '无近期结果'
+  let test_color = null
+  if (latestTest.result === 0 || latestTest.result === 3) {
+    if (test_days >= 0 && test_days < 3) {
+      test_tip = `${test_days}天`
+      test_color = "#52c41a"
+    }
+  } else if (latestTest.result === 1 || latestTest.result === 2) {
+    test_tip = `阳性${test_days}天`
+    test_color = "#ff411c"
+  }
+
   return (
     <div style={{margin: "20px 16px 0"}}>
       <Alert message="该项目为浙江大学软件工程课程小组项目，不构成任何法律效力！" type="warning" showIcon
@@ -78,7 +108,7 @@ function Home(props) {
         <div className={styles.qrCodeWrapper}>
           <Row gutter={16} justify="space-around" style={{width: "100%"}}>
             <Col span={12}>
-              {nameHidden ? (userInfo?.name) : (userInfo?.name.split('').map((item, index) => index === 1 ? '*' : item))}&nbsp;
+              {nameHidden ? (userInfo?.info?.name) : (userInfo?.info?.name.split('').map((item, index) => index === 1 ? '*' : item))}&nbsp;
               {nameHidden ? <EyeTwoTone onClick={() => {
                 setNameHidden(!nameHidden)
               }}/> : <EyeInvisibleTwoTone onClick={() => {
@@ -93,6 +123,15 @@ function Home(props) {
                 <h1>{time}</h1>
               </div>
             </Col>
+            {
+              locationName ?
+                <Col span={24}>
+                  <div style={{textAlign: "center"}}>
+                    <h1>{locationName}</h1>
+                  </div>
+                </Col>
+                : null
+            }
             <Col span={24}>
               <div style={{display: 'flex', justifyContent: 'center', padding: 0}}>
                 <div onClick={async () => {
@@ -111,9 +150,10 @@ function Home(props) {
       <Card className={styles.cardButtons}>
         <Row gutter={[16, 16]}>
           <Col span={8}>
-            <HomeCardButton content='查看核酸结果' icon={FormOutlined} onClick={() => {
-              navigate('/information', {state: {key: 'test'}})
-            }}/>
+            <HomeCardButton content={`核酸结果：${test_tip}`} backgroundColor={test_color} icon={FormOutlined}
+                            onClick={() => {
+                              navigate('/information', {state: {key: 'test'}})
+                            }}/>
           </Col>
           <Col span={8}>
             <HomeCardButton content='通信行程卡' icon={UpCircleTwoTone} onClick={() => {
@@ -170,7 +210,13 @@ function Home(props) {
 function HomeCardButton(props) {
   return (
     <div onClick={props.onClick}>
-      <Card hoverable style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: 90}}
+      <Card hoverable style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: 90,
+        backgroundColor: props.backgroundColor ?? 'white'
+      }}
             bodyStyle={{padding: 10}}>
         {React.createElement(props.icon, {style: {fontSize: 30, display: 'flex', justifyContent: 'center'}})}
         <div style={{fontSize: 12, textAlign: "center"}}>{props.content}</div>

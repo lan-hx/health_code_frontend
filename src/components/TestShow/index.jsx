@@ -13,9 +13,9 @@ const textMap = ["阴性", "混管阳性", "阳性", "报告未出"]
 const colorMap = ["#52c41a", "#ff411c", "#ff411c", "#888888"]
 
 const test_data = [
-  {id: 1, result: "阴性", color: "#52c41a", time: "2023-11-11 11:11:11"},
-  {id: 2, result: "阳性", color: "#ff411c", time: "2023-11-11 11:11:12"},
-  {id: 3, result: "报告未出", color: "#888888", time: "2023-11-11 11:11:13"}
+  {id: 1, result: "阴性", color: "#52c41a", date_time: 0},
+  {id: 2, result: "阳性", color: "#ff411c", date_time: 1},
+  {id: 3, result: "报告未出", color: "#888888", date_time: 2}
 ]
 
 
@@ -38,8 +38,12 @@ function TestShow(props) {
         Toast.show({icon: 'fail', content: `获取失败，错误码${data.error}，错误信息：${data.message}`})
         await new Promise(r => setTimeout(r, 3000));
       } else if (data.content) {
-        setTestResults([...testResults, ...data.content])
-        Toast.show({icon: 'success', content: `获取成功`})
+        if(data.content.length > 0) {
+          setTestResults([...testResults, ...data.content])
+          Toast.show({icon: 'success', content: `获取成功`})
+        } else {
+          setHasMore(false)
+        }
       } else {
         setHasMore(true)
       }
@@ -84,7 +88,7 @@ function TestShowCard(props) {
           style={{borderRadius: 16, backgroundColor: "#e5e5e5"}}>
       <div style={{display: "flex", justifyContent: "space-between"}}>
         <span style={{fontWeight: "bold"}}>报告时间：</span>
-        <span style={{textAlign: "right"}}>{props.date_time}</span>
+        <span style={{textAlign: "right"}}>{new Date(props.date_time).toLocaleString()}</span>
       </div>
     </Card>
   )

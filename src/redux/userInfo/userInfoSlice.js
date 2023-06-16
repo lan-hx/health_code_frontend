@@ -8,7 +8,7 @@ export const userInfoSlice = createSlice({
   reducers: {
     setUserInfo: (state, action) => {
       // notice: can be mutate
-      state.info = action.payload
+      state.info = {...state.info, ...action.payload}
     },
   },
 });

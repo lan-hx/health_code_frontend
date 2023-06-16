@@ -14,6 +14,8 @@ import Login from "../Login";
 export const routes = [{
   path: '/home', element: <Home/>
 }, {
+//   path: '/location/:location_id', element: <Home/>
+// }, {
   path: '/information', element: <Information/>
 }, {
   path: '/message', element: <Message/>

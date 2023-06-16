@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {NavBar, PullToRefresh, SafeArea, TabBar} from 'antd-mobile'
 import {
   useNavigate, useLocation, BrowserRouter as Router, Navigate, useRoutes,
@@ -10,6 +10,7 @@ import {nanoid} from "nanoid";
 import {useCookies} from "react-cookie";
 import {setUserToken} from "../../redux/user/userSlice";
 import {useDispatch} from "react-redux";
+import {setUserInfo} from "../../redux/userInfo/userInfoSlice";
 
 function HealthCodeMain() {
   const [cookies, setCookie, removeCookie] = useCookies(['user']);
@@ -28,9 +29,16 @@ function HealthCodeMain() {
     updateHeight();
     return () => window.removeEventListener('resize', updateHeight);
   }, []);
-  console.log(styles.app)
-  dispatch(setUserToken(cookies.token ?? ''))
-  console.log(`get token from cookie: ${cookies.token}`)
+
+  const willMount = useRef(true)
+  if(willMount.current) {
+    dispatch(setUserToken(cookies.token ?? ''))
+    dispatch(setUserInfo(cookies.userInfo ?? {}))
+    console.log(`get token from cookie:`, cookies.token)
+    console.log(`get username from cookie:`, cookies.userInfo)
+    willMount.current = false
+  }
+
   return (<Router initialEntries={['/home']}>
     <div className={styles.app} style={height ? {height: height} : {}}>
       <HealthCodeContent className={styles.content}/>

@@ -10,9 +10,9 @@ import axios from "axios";
 VaccineShow.propTypes = {};
 
 const test_data = [
-  {id: 1, counter: 1, kind: "A", time: "2023-11-11 11:11:11"},
-  {id: 2, counter: 2, kind: "B", time: "2023-11-11 11:11:12"},
-  {id: 3, counter: 3, kind: "C", time: "2023-11-11 11:11:13"}
+  {id: 1, counter: 1, kind: "A", time: 1000},
+  {id: 2, counter: 2, kind: "B", time: 2000},
+  {id: 3, counter: 3, kind: "C", time: 3000}
 ]
 
 function VaccineShow(props) {
@@ -66,7 +66,11 @@ function VaccineShowCard(props) {
       </div>
       <div style={{display: "flex", justifyContent: "space-between"}}>
         <span style={{fontWeight: "bold"}}>接种时间：</span>
-        <span style={{textAlign: "right"}}>{props.datetime}</span>
+        <span style={{textAlign: "right"}}>{new Date(props.datetime).toLocaleString()}</span>
+      </div>
+      <div style={{display: "flex", justifyContent: "space-between"}}>
+        <span style={{fontWeight: "bold"}}>接种地点：</span>
+        <span style={{textAlign: "right"}}>{props.address}</span>
       </div>
     </Card>
   )

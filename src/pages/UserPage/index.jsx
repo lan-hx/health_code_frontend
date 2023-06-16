@@ -16,6 +16,7 @@ UserPage.propTypes = {};
 function UserPage(props) {
   const navigate = useNavigate()
   const userToken = useSelector(state => state.user.token)
+  const userInfo = useSelector(state => state.userInfo.info)
   const disaptch = useDispatch()
 
   const [notification, SetNotification] = useState(false)
@@ -39,8 +40,22 @@ function UserPage(props) {
   }
 
   const setNotification = async () => {
-    // todo
-    Toast.show({icon: 'fail', content: `后端未实现`})
+    try {
+      const response = await axios.post('/api/SetNotifications', {
+        token: userToken,
+        status: !notification
+      })
+      console.log(response);
+      const data = response.data
+      if (data.error !== 0) {
+        Toast.show({icon: 'fail', content: `自动提醒设置失败，错误码${data.error}，错误信息：${data.message}`})
+      } else {
+        SetNotification(!notification)
+      }
+    } catch (error) {
+      console.error(error);
+      Toast.show({icon: 'fail', content: `自动提醒设置失败，网络错误`})
+    }
   }
 
   useEffect(() => {
@@ -50,9 +65,11 @@ function UserPage(props) {
     }
   }, [])
 
+  console.log(userInfo?.card_id?.slice(6, 10))
+
   return (
     <div style={{margin: "20px 16px 0"}}>
-      <ProfileCard/>
+      <ProfileCard name={userInfo.name} age={2023-parseInt(userInfo?.card_id?.slice(6, 10))}/>
       <List header="我的信息">
         <List.Item prefix={<UserOutlined/>} clickable onClick={() => {
           navigate('/user/information')
@@ -136,8 +153,8 @@ function ProfileCard(props) {
         flexDirection: "column",
         justifyContent: "space-around"
       }}>
-        <div>姓名：{userInfo?.name}</div>
-        <div>年龄：{userInfo?.name}</div>
+        <div>姓名：{props.name}</div>
+        <div>年龄：{props.age}</div>
       </div>
       <Button type='text' onClick={() => {
         navigate('/user/information')

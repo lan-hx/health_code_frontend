@@ -48,6 +48,7 @@ function Login(props) {
               dispatch(setUserToken(data.token))
               dispatch(setUserInfo({uid: data.uid, name: data.name, card_id: data.card_id}))
               setCookie('token', data.token)
+              setCookie('userInfo', {uid: data.uid, name: data.name, card_id: data.card_id})
               navigate('/user')
             }
           } catch (error) {
